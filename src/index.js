@@ -1,7 +1,10 @@
 import './css/styles.css';
 import debounce from "lodash.debounce";
 
-const DEBOUNCE_DELAY = 500;
+import { fetchCountries } from "./fetchCountries";
+export { buildCardCountry, clearAll }
+
+const DEBOUNCE_DELAY = 300;
 
 const refs = {
     inputEl: document.querySelector('input[id="search-box"]'),
@@ -9,62 +12,46 @@ const refs = {
     infoCountryEl: document.querySelector('.country-info'),
 }
 
-// console.log(refs.inputEl)
-// console.log(refs.listCountryEl)
-// console.log(refs.infoCountryEl)
 let descCountry = {};
-refs.inputEl.addEventListener('input', debounce(callBack, DEBOUNCE_DELAY))
+refs.inputEl.addEventListener('input', debounce(delayFindCountry, DEBOUNCE_DELAY))
 
-function callBack(evt) {
+function delayFindCountry(evt) {
     descCountry['name'] = evt.target.value.trim()
-    console.log(descCountry)
     if (!descCountry.name) {
         refs.listCountryEl.innerHTML = '';
         refs.infoCountryEl.innerHTML = '';
         return
     }
-    findeCountry(descCountry)
-    console.log(evt.target.value)
-}
-
-function findeCountry({ name }) {
-    console.log(name)
-    const contryFetch = fetch(`https://restcountries.com/v2/name/${name}?fields=name,capital,population,flags`).then((response) => {
-    if (!response.ok) {
-        throw new Error(response.status);
-    }
-    return response.json()
-}).then((country) => {
-    console.log(country)
-    if (country.length > 10) {
-        alert(`MORE!!!`)
-        return
-    }
-    buildCardCountry(country)
-}).catch(error => {
-    console.log(error)
-    refs.listCountryEl.innerHTML = '';
-    refs.infoCountryEl.innerHTML = '';
-  });
+    fetchCountries(descCountry)
 }
 
 function buildCardCountry(country) {
-    console.log(country)
-    
     if (country.length !== 1) {
         refs.infoCountryEl.innerHTML = ''
-        refs.listCountryEl.innerHTML = country.map(makeGalaryItem).join('');
+        refs.listCountryEl.innerHTML = country.map(makeListCountries).join('');
         return
     }
+    const nameLanguages = country[0].languages.map(language => language.name)
     refs.listCountryEl.innerHTML = '';
-    refs.infoCountryEl.innerHTML = `<img src="${country[0].flags.svg}" alt="flag"/>
-        <p>${country[0].population}</p>
-        <p>${country[0].capital}</p>
-        <p>${country[0].name}</p>`
+    refs.infoCountryEl.innerHTML =
+        `<div style="display: flex; gap: 10px; align-items: center;">
+            <img style="width:${100}px; height:${100}px;" src="${country[0].flags.svg}" alt="flag"/>
+            <p style="font-size: 36px; font-weight: 700;">${country[0].name}</p>
+        </div>
+        <p style="font-size: 18px; font-weight: 700;">Capital:<span style="margin-left: 5px; font-weight: 400;">${country[0].capital}</span></p>
+        <p style="font-size: 18px; font-weight: 700;">Population:<span style="margin-left: 5px; font-weight: 400;">${country[0].population}</span></p>
+        <p style="font-size: 18px; font-weight: 700;">Languages:<span style="margin-left: 5px; font-weight: 400;">${nameLanguages}</span></p>`
 }
 
-function makeGalaryItem({name}) {
-  return `<li>${name}</li>`
+
+function makeListCountries(country) {
+    return `<li style="display: flex; gap:3px; align-items: center; margin: 5px;">
+    <img style="width:${30}px; height:${30}px;" src="${country.flags.svg}" alt="flag" class="img"/>
+    <p style="font-weight: 500; margin: 0;">${country.name}</p>
+    </li>`
 }
 
-// https://restcountries.com/v2/name/${name}?fields=name,capital,population,flags
+function clearAll() {
+    refs.listCountryEl.innerHTML = '';
+    refs.infoCountryEl.innerHTML = '';
+}
